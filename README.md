@@ -37,7 +37,7 @@ GitHub Pages
 Remix IDE
 
 Smart Contract
-Contract Address: 0xYOUR_CONTRACT_ADDRESS_HERE
+Contract Address: 0x2646C40E21f8ef7637e3cD7AB6e33730Fba3C1A5
 Network: Sepolia Testnet
 
 Functions:
