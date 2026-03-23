@@ -5,7 +5,7 @@ Project Overview
 A decentralized application that allows users to deposit Ether into a smart contract and enables the contract owner to send funds to other addresses. The application includes a Solidity smart contract deployed on Sepolia testnet and a web interface that connects via MetaMask.
 
 Live Demo
-https://YOUR-USERNAME.github.io/CryptoWallet/
+https://mekdelawittkassahun.github.io/CryptoWallet/
 
 Requires MetaMask extension and connection to Sepolia test network.
 
