@@ -1,11 +1,10 @@
 Crypto Wallet Decentralized Application
 
-
 Project Overview
 A decentralized application that allows users to deposit Ether into a smart contract and enables the contract owner to send funds to other addresses. The application includes a Solidity smart contract deployed on Sepolia testnet and a web interface that connects via MetaMask.
 
 Live Demo
-https://mekdelawittkassahun.github.io/CryptoWallet/wallet.html
+https://mekdelawittkassahun.github.io/CryptoWallet/
 
 Requires MetaMask extension and connection to Sepolia test network.
 
@@ -37,7 +36,7 @@ GitHub Pages
 Remix IDE
 
 Smart Contract
-Contract Address: 0x2646C40E21f8ef7637e3cD7AB6e33730Fba3C1A5
+Contract Address: 0x3a7346F762F00890242fdc0c3A59dC6bbA2bF7Fc
 Network: Sepolia Testnet
 
 Functions:
@@ -65,4 +64,3 @@ Hosted on GitHub Pages. The index.html file is served directly from the reposito
 
 Smart Contract
 Deployed using Remix IDE to Sepolia testnet via MetaMask.
-
