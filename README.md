@@ -1,4 +1,6 @@
 Crypto Wallet Decentralized Application
+
+
 Project Overview
 A decentralized application that allows users to deposit Ether into a smart contract and enables the contract owner to send funds to other addresses. The application includes a Solidity smart contract deployed on Sepolia testnet and a web interface that connects via MetaMask.
 
@@ -63,7 +65,4 @@ Hosted on GitHub Pages. The index.html file is served directly from the reposito
 
 Smart Contract
 Deployed using Remix IDE to Sepolia testnet via MetaMask.
-
-
-README.md
 
