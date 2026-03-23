@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Crypto Wallet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+            transform: scale(1.02);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        input {
+            background: rgba(255,255,255,0.9);
+        }
+        .balance {
+            font-size: 32px;
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+        }
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .connected {
+            background: #4CAF50;
+        }
+        .disconnected {
+            background: #f44336;
+        }
+        .loading {
+            background: #ff9800;
+        }
+        h1, h3 {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        #accountInfo {
+            text-align: center;
+            margin: 10px;
+            font-size: 14px;
+            word-break: break-all;
+        }
+        .tx-hash {
+            font-size: 12px;
+            word-break: break-all;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 My Blockchain Wallet</h1>
+        
+        <!-- Connection Section -->
+        <button id="connectBtn" onclick="connectWallet()">🔌 Connect MetaMask</button>
+        <div id="accountInfo"></div>
+        
+        <!-- Contract Address Input -->
+        <input type="text" id="contractAddress" placeholder="Enter Contract Address">
+        
+        <!-- Balance Section -->
+        <div class="balance" id="balance">💰 Balance: 0 ETH</div>
+        <button onclick="getBalance()">🔄 Refresh Balance</button>
+        
+        <!-- Deposit Section -->
+        <h3>📥 Deposit ETH</h3>
+        <input type="number" id="depositAmount" placeholder="Amount in ETH" step="0.01">
+        <button id="depositBtn" onclick="deposit()">Deposit</button>
+        
+        <!-- Send Section -->
+        <h3>📤 Send ETH (Owner Only)</h3>
+        <input type="text" id="sendTo" placeholder="Recipient Address">
+        <input type="number" id="sendAmount" placeholder="Amount in ETH" step="0.01">
+        <button id="sendBtn" onclick="sendMoney()">Send</button>
+        
+        <!-- Status Message -->
+        <div id="status" class="status disconnected">
+            ⚠️ Not Connected
+        </div>
+        <div id="txHash" class="tx-hash"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <script>
+        let web3;
+        let contract;
+        let account;
+        
+        const contractABI = [
+            {
+                "inputs": [
+                    {
+                        "internalType": "address payable",
+                        "name": "to",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "sendMoney",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "stateMutability": "payable",
+                "type": "receive"
+            },
+            {
+                "inputs": [],
+                "name": "getBalance",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "owner",
+                "outputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+        
+        // Helper function to disable/enable buttons
+        function setButtonsEnabled(enabled) {
+            document.getElementById('depositBtn').disabled = !enabled;
+            document.getElementById('sendBtn').disabled = !enabled;
+        }
+        
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                alert('Please install MetaMask!');
+                window.open('https://metamask.io/download.html', '_blank');
+                return;
+            }
+            
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                account = accounts[0];
+                web3 = new Web3(window.ethereum);
+                
+                const contractAddress = document.getElementById('contractAddress').value;
+                if (!contractAddress) {
+                    document.getElementById('status').innerHTML = '❌ Please enter contract address';
+                    document.getElementById('status').className = 'status disconnected';
+                    return;
+                }
+                
+                contract = new web3.eth.Contract(contractABI, contractAddress);
+                
+                document.getElementById('accountInfo').innerHTML = `✅ Connected: ${account.substring(0,6)}...${account.substring(account.length - 4)}`;
+                document.getElementById('status').innerHTML = '✅ Connected to Contract!';
+                document.getElementById('status').className = 'status connected';
+                
+                await getBalance();
+                
+                // Listen for account changes
+                window.ethereum.on('accountsChanged', function(accounts) {
+                    account = accounts[0];
+                    document.getElementById('accountInfo').innerHTML = `🔄 Account changed: ${account.substring(0,6)}...`;
+                    getBalance();
+                });
+                
+            } catch (error) {
+                console.error(error);
+                document.getElementById('status').innerHTML = '❌ Connection failed: ' + error.message;
+                document.getElementById('status').className = 'status disconnected';
+            }
+        }
+        
+        async function getBalance() {
+            if (!contract) {
+                alert('Please connect first!');
+                return;
+            }
+            
+            try {
+                const balanceWei = await contract.methods.getBalance().call();
+                const balanceEth = web3.utils.fromWei(balanceWei, 'ether');
+                document.getElementById('balance').innerHTML = `💰 Balance: ${balanceEth} ETH`;
+                return balanceEth;
+            } catch (error) {
+                console.error(error);
+                document.getElementById('status').innerHTML = '❌ Error getting balance';
+                return null;
+            }
+        }
+        
+        async function deposit() {
+            if (!contract || !account) {
+                alert('Please connect first!');
+                return;
+            }
+            
+            const amount = document.getElementById('depositAmount').value;
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            // Disable buttons during transaction
+            setButtonsEnabled(false);
+            
+            try {
+                document.getElementById('status').innerHTML = '⏳ Processing deposit... Please wait.';
+                document.getElementById('status').className = 'status loading';
+                document.getElementById('txHash').innerHTML = '';
+                
+                const amountWei = web3.utils.toWei(amount, 'ether');
+                
+                // Send transaction and WAIT for confirmation
+                const tx = await web3.eth.sendTransaction({
+                    from: account,
+                    to: contract.options.address,
+                    value: amountWei
+                });
+                
+                // Show transaction hash
+                document.getElementById('txHash').innerHTML = `✅ Transaction: ${tx.transactionHash.substring(0, 20)}...`;
+                
+                // Wait a moment for blockchain to update
+                document.getElementById('status').innerHTML = '⏳ Updating balance...';
+                
+                // Get updated balance
+                await getBalance();
+                
+                document.getElementById('status').innerHTML = `✅ Deposited ${amount} ETH!`;
+                document.getElementById('status').className = 'status connected';
+                document.getElementById('depositAmount').value = '';
+                
+            } catch (error) {
+                console.error("Deposit error:", error);
+                document.getElementById('status').innerHTML = '❌ Deposit failed: ' + (error.message || error);
+                document.getElementById('status').className = 'status disconnected';
+            } finally {
+                // Re-enable buttons
+                setButtonsEnabled(true);
+            }
+        }
+        
+        async function sendMoney() {
+            if (!contract || !account) {
+                alert('Please connect first!');
+                return;
+            }
+            
+            const to = document.getElementById('sendTo').value;
+            const amount = document.getElementById('sendAmount').value;
+            
+            if (!to || !amount || amount <= 0) {
+                alert('Please enter valid recipient and amount');
+                return;
+            }
+            
+            // Disable buttons during transaction
+            setButtonsEnabled(false);
+            
+            try {
+                document.getElementById('status').innerHTML = '⏳ Sending transaction... Please wait.';
+                document.getElementById('status').className = 'status loading';
+                document.getElementById('txHash').innerHTML = '';
+                
+                const amountWei = web3.utils.toWei(amount, 'ether');
+                
+                // Send transaction and WAIT for confirmation
+                const receipt = await contract.methods.sendMoney(to, amountWei)
+                    .send({ from: account });
+                
+                // Show transaction hash
+                document.getElementById('txHash').innerHTML = `✅ Transaction: ${receipt.transactionHash.substring(0, 20)}...`;
+                
+                // Wait a moment for blockchain to update
+                document.getElementById('status').innerHTML = '⏳ Updating balance...';
+                
+                // Get updated balance
+                await getBalance();
+                
+                document.getElementById('status').innerHTML = `✅ Sent ${amount} ETH!`;
+                document.getElementById('status').className = 'status connected';
+                document.getElementById('sendTo').value = '';
+                document.getElementById('sendAmount').value = '';
+                
+            } catch (error) {
+                console.error("Send error:", error);
+                let errorMsg = error.message || error;
+                if (errorMsg.includes("Not owner")) {
+                    errorMsg = "Only the contract owner can send money!";
+                }
+                document.getElementById('status').innerHTML = '❌ Send failed: ' + errorMsg;
+                document.getElementById('status').className = 'status disconnected';
+            } finally {
+                // Re-enable buttons
+                setButtonsEnabled(true);
+            }
+        }
+        
+        // Auto-refresh balance every 10 seconds
+        let autoRefreshInterval;
+        
+        window.onload = function() {
+            console.log("Page loaded!");
+            // Start auto-refresh when connected
+            setInterval(async () => {
+                if (contract && account) {
+                    await getBalance();
+                }
+            }, 10000); // Refresh every 10 seconds
+        };
+    </script>
+</body>
+</html>
